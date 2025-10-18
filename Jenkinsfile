@@ -1,37 +1,42 @@
 pipeline {
-  agent {
-    docker { image 'node:18'; args '-u root:root' }
-  }
+  agent any
+  
   environment {
     CI = 'true'
     NETLIFY_AUTH_TOKEN = credentials('NETLIFY_AUTH_TOKEN')
     NETLIFY_SITE_ID    = credentials('NETLIFY_SITE_ID')
   }
+  
   options {
     timestamps()
     buildDiscarder(logRotator(numToKeepStr: '10'))
   }
+  
   stages {
     stage('Checkout') {
       steps {
         checkout scm
       }
     }
+    
     stage('Install dependencies') {
       steps {
         sh 'npm ci'
       }
     }
+    
     stage('Lint') {
       steps {
         sh 'npm run lint || true'
       }
     }
+    
     stage('Test') {
       steps {
         sh 'npm test || echo "Tests skipped or no tests configured"'
       }
     }
+    
     stage('Build') {
       steps {
         sh 'npm run build'
@@ -42,6 +47,7 @@ pipeline {
         }
       }
     }
+    
     stage('Deploy to Netlify') {
       when {
         branch 'main'
@@ -56,6 +62,7 @@ pipeline {
       }
     }
   }
+  
   post {
     success {
       echo "✅ Build & Deploy successful — check Netlify dashboard!"
