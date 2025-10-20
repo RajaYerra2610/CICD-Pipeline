@@ -7,7 +7,7 @@ pipeline {
 
   environment {
     CI = 'true'
-    NETLIFY_AUTH_TOKEN = credentials('nfp_jyCV2ku7i6r2WMP7ucCGSBJCbv9kAvCn67f9') // Jenkins credential ID
+    NETLIFY_AUTH_TOKEN = credentials('NETLIFY_AUTH_TOKEN') // Jenkins credential ID
     NETLIFY_SITE_ID    = '382119c6-07f6-458f-a8ea-487fa3669841'                  // raw site ID as string
   }
 
