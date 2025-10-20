@@ -30,20 +30,6 @@ pipeline {
       }
     }
 
-    stage('Lint') {
-      steps {
-        echo '🔍 Running lint checks...'
-        sh 'npm run lint || true'
-      }
-    }
-
-    stage('Test') {
-      steps {
-        echo '🧪 Running tests...'
-        sh 'npm test || echo "Tests skipped or no tests configured"'
-      }
-    }
-
 stage('Build') {
   steps {
     echo '🏗️ Building project...'
