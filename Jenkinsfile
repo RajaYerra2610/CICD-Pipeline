@@ -1,115 +1,68 @@
 pipeline {
-  agent any
-  
-  tools {
-    nodejs "node"  // must match NodeJS installation name in Jenkins
+  agent {
+    docker { image 'node:18'; args '-u root:root' }
   }
-  
   environment {
-    CI = 'false'  // Disable CI mode to prevent treating warnings as errors
-    NETLIFY_AUTH_TOKEN = credentials('NETLIFY_AUTH_TOKEN')
-    NETLIFY_SITE_ID = '382119c6-07f6-458f-a8ea-487fa3669841'
+    CI = 'true'
+    GIT_EMAIL = 'ci-bot@example.com'
+    GIT_NAME  = 'ci-bot'
+    GITHUB_PAT = credentials('GITHUB_PAT')  // Jenkins credential id
   }
-  
   options {
     timestamps()
+    ansiColor('xterm')
     buildDiscarder(logRotator(numToKeepStr: '10'))
-    timeout(time: 30, unit: 'MINUTES')
   }
-  
   stages {
     stage('Checkout') {
       steps {
-        echo '📥 Checking out source code...'
         checkout scm
       }
     }
-    
-    stage('Install Dependencies') {
+
+    stage('Install dependencies') {
       steps {
-        echo '📦 Installing dependencies...'
-        sh 'npm ci --prefer-offline --no-audit'
+        sh 'npm ci'  // reproducible install
       }
     }
+
     
     stage('Build') {
       steps {
-        echo '🏗️ Building project...'
         sh 'npm run build'
       }
       post {
         success {
-          echo '✅ Build artifacts created successfully'
-          archiveArtifacts artifacts: 'build/**/*', fingerprint: true, allowEmptyArchive: false
+          archiveArtifacts artifacts: 'build/**', fingerprint: true
         }
       }
     }
-    
-    stage('Verify Build Output') {
-      steps {
-        echo '🔍 Verifying build output...'
-        sh '''
-          if [ ! -d "build" ]; then
-            echo "Error: build directory not found!"
-            exit 1
-          fi
-          echo "Build directory contents:"
-          ls -la build/
-        '''
-      }
-    }
-    
-    stage('Deploy to Netlify') {
+
+    stage('Deploy to GitHub Pages') {
       when {
         branch 'main'
       }
       steps {
-        echo '🚀 Deploying to Netlify...'
         sh '''
-          # Install netlify-cli if not already available
-          npm install -g netlify-cli@latest
-          
-          # Verify authentication
-          echo "Testing Netlify authentication..."
-          netlify status --auth=$NETLIFY_AUTH_TOKEN || {
-            echo "❌ Netlify authentication failed!"
-            echo "Please verify your NETLIFY_AUTH_TOKEN credential in Jenkins"
-            exit 1
-          }
-          
-          # Deploy to production
-          echo "Deploying to site: $NETLIFY_SITE_ID"
-          netlify deploy \
-            --dir=build \
-            --site=$NETLIFY_SITE_ID \
-            --auth=$NETLIFY_AUTH_TOKEN \
-            --prod \
-            --message="Jenkins build #${BUILD_NUMBER}"
+          set -e
+          cd build
+          git init
+          git config user.email "$GIT_EMAIL"
+          git config user.name "$GIT_NAME"
+          git add .
+          git commit -m "Deploy from Jenkins: ${GIT_COMMIT}"
+          git push --force https://${GITHUB_PAT}@github.com/<you>/my-app.git master:gh-pages
         '''
-      }
-      post {
-        success {
-          echo '✅ Deployment successful!'
-          echo "🌐 Visit: https://app.netlify.com/sites/${env.NETLIFY_SITE_ID}"
-        }
-        failure {
-          echo '❌ Deployment failed - check Netlify credentials and site access'
-        }
       }
     }
   }
-  
+
   post {
     success {
-      echo "✅ Pipeline completed successfully!"
-      echo "Build #${BUILD_NUMBER} deployed to production"
+      echo "Build & deploy succeeded."
     }
     failure {
-      echo "❌ Pipeline failed at stage: ${env.STAGE_NAME}"
-      echo "Check the logs above for details"
-    }
-    always {
-      echo "Pipeline execution time: ${currentBuild.durationString}"
+      echo "Build failed. Check console output."
     }
   }
 }
