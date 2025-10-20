@@ -7,8 +7,8 @@ pipeline {
 
   environment {
     CI = 'true'
-    NETLIFY_AUTH_TOKEN = credentials('NETLIFY_AUTH_TOKEN')
-    NETLIFY_SITE_ID    = credentials('NETLIFY_SITE_ID')
+    NETLIFY_AUTH_TOKEN = credentials('nfp_jyCV2ku7i6r2WMP7ucCGSBJCbv9kAvCn67f9')
+    NETLIFY_SITE_ID    = credentials('382119c6-07f6-458f-a8ea-487fa3669841')
   }
 
   options {
