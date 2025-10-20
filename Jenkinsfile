@@ -2,13 +2,13 @@ pipeline {
   agent any
 
   tools {
-    nodejs "node"  // 👈 matches the NodeJS installation name in Jenkins > Global Tool Configuration
+    nodejs "node"  // must match NodeJS installation name in Jenkins
   }
 
   environment {
     CI = 'true'
-    NETLIFY_AUTH_TOKEN = credentials('nfp_jyCV2ku7i6r2WMP7ucCGSBJCbv9kAvCn67f9')
-    NETLIFY_SITE_ID    = credentials('382119c6-07f6-458f-a8ea-487fa3669841')
+    NETLIFY_AUTH_TOKEN = credentials('nfp_jyCV2ku7i6r2WMP7ucCGSBJCbv9kAvCn67f9') // Jenkins credential ID
+    NETLIFY_SITE_ID    = '382119c6-07f6-458f-a8ea-487fa3669841'                  // raw site ID as string
   }
 
   options {
@@ -30,23 +30,20 @@ pipeline {
       }
     }
 
-stage('Build') {
-  steps {
-    echo '🏗️ Building project...'
-    sh '''
-      # Disable treating warnings as errors
-      unset CI
-      npm run build || true
-    '''
-  }
-  post {
-    success {
-      archiveArtifacts artifacts: 'build/**', fingerprint: true
+    stage('Build') {
+      steps {
+        echo '🏗️ Building project...'
+        sh '''
+          unset CI
+          npm run build || true
+        '''
+      }
+      post {
+        success {
+          archiveArtifacts artifacts: 'build/**', fingerprint: true
+        }
+      }
     }
-  }
-}
-
-    
 
     stage('Deploy to Netlify') {
       when {
