@@ -42,20 +42,23 @@ pipeline {
       when {
         branch 'main'
       }
-      steps {
-        sh '''
-          set -e
-          cd build
-          git init
-          git config user.email "$GIT_EMAIL"
-          git config user.name "$GIT_NAME"
-          git add .
-          git commit -m "Deploy from Jenkins: ${GIT_COMMIT}"
-          git push --force https://${GITHUB_PAT}@github.com/<you>/my-app.git master:gh-pages
-        '''
-      }
-    }
+      stage('Deploy to GitHub Pages') {
+  when {
+    branch 'main'
   }
+  steps {
+    sh '''
+      set -e
+      cd build
+      git init
+      git config user.email "$GIT_EMAIL"
+      git config user.name "$GIT_NAME"
+      git add .
+      git commit -m "Deploy from Jenkins: ${GIT_COMMIT}"
+      git push --force https://${GITHUB_PAT}@github.com/RajaYerra2610/CICD-Pipeline.git master:gh-pages
+    '''
+  }
+}
 
   post {
     success {
